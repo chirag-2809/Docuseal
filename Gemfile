@@ -32,7 +32,7 @@ gem 'pg', require: false
 gem 'pretender'
 gem 'puma', require: false
 gem 'rack'
-gem 'rails', '8.1.2'
+gem 'rails'
 gem 'rails-i18n'
 gem 'rotp'
 gem 'rouge', require: false

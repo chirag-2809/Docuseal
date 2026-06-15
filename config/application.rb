@@ -19,6 +19,15 @@ module DocuSeal
   class Application < Rails::Application
     config.load_defaults 8.1
 
+    # Rails 8.1 removed the `has_many_inversing` setter from ActiveRecord (the
+    # behavior is now permanent/always-on), but it's still present as a default
+    # key in config.active_record. When applied to ActiveRecord::Base during
+    # boot, DynamicMatchers makes respond_to? falsely report it as an attribute
+    # writer, so the guarded setter call falls through to method_missing and
+    # raises "undefined method 'has_many_inversing=' for class ActiveRecord::Base".
+    # Drop the stale key so it's never applied. Safe: the behavior stays enabled.
+    config.active_record.delete(:has_many_inversing)
+
     config.autoload_lib(ignore: %w[assets tasks puma])
 
     config.active_storage.routes_prefix = ''
