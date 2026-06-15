@@ -1,1 +1,1 @@
-web: puma -p $PORT -C ./config/puma.rb
+web: bundle exec puma -C /app/config/puma.rb --dir /app
