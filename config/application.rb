@@ -19,14 +19,24 @@ module DocuSeal
   class Application < Rails::Application
     config.load_defaults 8.1
 
-    # Rails 8.1 removed the `has_many_inversing` setter from ActiveRecord (the
-    # behavior is now permanent/always-on), but it's still present as a default
-    # key in config.active_record. When applied to ActiveRecord::Base during
-    # boot, DynamicMatchers makes respond_to? falsely report it as an attribute
-    # writer, so the guarded setter call falls through to method_missing and
-    # raises "undefined method 'has_many_inversing=' for class ActiveRecord::Base".
-    # Drop the stale key so it's never applied. Safe: the behavior stays enabled.
-    config.active_record.delete(:has_many_inversing)
+    # Rails 8.1 removed several Active Record config accessors that older
+    # load_defaults still populate (e.g. has_many_inversing,
+    # belongs_to_required_by_default) — their behaviors are now permanent. The
+    # stale keys remain in config.active_record, and when applied to
+    # ActiveRecord::Base during boot, DynamicMatchers makes respond_to? a false
+    # positive, so the setter falls through to method_missing and crashes with
+    # "undefined method '<flag>=' for class ActiveRecord::Base".
+    #
+    # Strip any config.active_record key that has no real setter on the
+    # ActiveRecord module — this mirrors the guard fixed Rails uses
+    # (`if ActiveRecord.respond_to?(setter)`) and is not fooled by
+    # DynamicMatchers. Checking the module (not ActiveRecord::Base) avoids
+    # force-loading the class here. :encryption is a hash applied separately.
+    config.active_record.keys.each do |key|
+      next if key == :encryption
+
+      config.active_record.delete(key) unless ActiveRecord.respond_to?("#{key}=")
+    end
 
     config.autoload_lib(ignore: %w[assets tasks puma])
 
